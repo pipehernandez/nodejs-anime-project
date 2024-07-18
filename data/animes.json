@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "title": "Naruto",
+    "genre": "Aventura",
+    "studioId": 1
+  },
+  {
+    "id": 2,
+    "title": "Dragon Ball",
+    "genre": "Aventura",
+    "studioId": 2
+  }
+]
