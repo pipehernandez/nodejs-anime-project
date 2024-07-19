@@ -1,27 +1,32 @@
-const express = require("express");
-const fs = require("fs");
-const path = require("path");
+import { Router } from "express";
+import { promises as fs } from "fs";
+import { fileURLToPath } from "url";
+import path from "path";
 
 
-const router = express.Router();
-const animesFilePath = path.join(__dirname, "../../data/animes.json");
+const routerAnime = Router();
+const _filename = fileURLToPath(import.meta.url);
+const _dirname = path.dirname(_filename);
+
+const animesFilePath = path.join(_dirname, "../../data/animes.json");
 
 // Leer animes
 
-const readAnimes = () => {
-    const animesData = fs.readFileSync(animesFilePath);
+const readAnimes = async () => {
+    const animesData = await fs.readFile(animesFilePath);
     return JSON.parse(animesData);
 };
 
 // Escribir animes en el archivo
 
-const writeAnimes = (animes) => {
-    fs.writeFileSync(animesFilePath, JSON.stringify(animes, null, 2));
+const writeAnimes = async (animes) => {
+    await fs.writeFile(animesFilePath, JSON.stringify(animes, null, 2));
 };
 
 // Crear un nuevo anime
-router.post("/", (req, res) => {
-    const animes = readAnimes();
+
+routerAnime.post("/", async (req, res) => {
+    const animes = await readAnimes();
     // console.log(animes)
     const newAnime = {
         id: animes.length + 1,
@@ -30,29 +35,29 @@ router.post("/", (req, res) => {
         studioId: req.body.studioId,
     };
     animes.push(newAnime);
-    writeAnimes(animes);
+    await writeAnimes(animes);
     res.status(201).json({ message: "Anime creado exitosamente.", anime: newAnime });
 });
 
 // Obtener todos los animes
-router.get("/", (req, res) => {
-    const animes = readAnimes();
+routerAnime.get("/", async (req, res) => {
+    const animes = await readAnimes();
     res.json(animes);
 });
 
 // Obtener anime por ID
-router.get("/:id", (req, res) => {
-    const animes = readAnimes();
+routerAnime.get("/:id", async (req, res) => {
+    const animes = await readAnimes();
     const anime = animes.find((a) => a.id === parseInt(req.params.id));
     if (!anime) {
         return res.status(404).json({ message: "Anime no encontrado" });
     }
-    res.json(anime);
+    res.status(200).json(anime);
 });
 
 // Actualizar un anime por ID
-router.put("/:id", (req, res) => {
-    const animes = readAnimes();
+routerAnime.put("/:id", async (req, res) => {
+    const animes = await readAnimes();
     const animeIndex = animes.findIndex((a) => a.id === parseInt(req.params.id));
     if (animeIndex === -1) {
         return res.status(404).json({ message: "Anime no encontrado." });
@@ -64,19 +69,19 @@ router.put("/:id", (req, res) => {
         studioId: req.body.studioId,
     };
     animes[animeIndex] = updateAnime;
-    writeAnimes(animes);
-    res.json({ message: "Anime actualizado exitosamente", anime: updateAnime });
+    await writeAnimes(animes);
+    res.status(201).json({ message: "Anime actualizado exitosamente", anime: updateAnime });
 });
 
 // Eliminar un anime por ID
-router.delete("/:id", (req, res) => {
-    const animes = readAnimes();
+routerAnime.delete("/:id", async (req, res) => {
+    const animes = await readAnimes();
     const newAnimes = animes.filter((a) => a.id !== parseInt(req.params.id));
     if (animes.length === newAnimes.length) {
         return res.status(404).json({ message: "Anime no encontrado" });
     }
-    writeAnimes(newAnimes);
-    res.json({ message: "Anime eliminado exitosamente" });
+    await writeAnimes(newAnimes);
+    res.json({ message: "Anime eliminado exitosamente." });
 });
 
-module.exports = router;
+export default routerAnime;

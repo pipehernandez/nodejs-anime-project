@@ -1,27 +1,31 @@
-const express = require("express");
-const fs = require("fs");
-const path = require("path");
+import { Router } from "express";
+import { promises as fs } from "fs";
+import { fileURLToPath } from "url";
+import path from "path";
 
 
-const router = express.Router();
-const charactersFilePath = path.join(__dirname, "../../data/characters.json");
+const routerCharacter = Router();
+const _filename = fileURLToPath(import.meta.url);
+const _dirname = path.dirname(_filename);
+
+const charactersFilePath = path.join(_dirname, "../../data/characters.json");
 
 // Leer personajes
 
-const readCharacters = () => {
-    const charactersData = fs.readFileSync(charactersFilePath);
+const readCharacters = async () => {
+    const charactersData = await fs.readFile(charactersFilePath);
     return JSON.parse(charactersData);
 };
 
 // Escribir personajes en el archivo
 
-const writeCharacters = (characters) => {
-    fs.writeFileSync(charactersFilePath, JSON.stringify(characters, null, 2));
+const writeCharacters = async (characters) => {
+    await fs.writeFile(charactersFilePath, JSON.stringify(characters, null, 2));
 };
 
 // Crear un nuevo personaje
-router.post("/", (req, res) => {
-    const characters = readCharacters();
+routerCharacter.post("/", async (req, res) => {
+    const characters = await readCharacters();
     // console.log(characters)
     const newCharacter = {
         id: characters.length + 1,
@@ -29,19 +33,19 @@ router.post("/", (req, res) => {
         animeId: req.body.animeId,
     };
     characters.push(newCharacter);
-    writeCharacters(characters);
+    await writeCharacters(characters);
     res.status(201).json({ message: "Personaje creado exitosamente.", character: newCharacter });
 });
 
 // Obtener todos los personajes
-router.get("/", (req, res) => {
-    const characters = readCharacters();
-    res.json(characters);
+routerCharacter.get("/", async (req, res) => {
+    const characters = await readCharacters();
+    res.status(200).json(characters);
 });
 
 // Obtener personaje por ID
-router.get("/:id", (req, res) => {
-    const characters = readCharacters();
+routerCharacter.get("/:id", async (req, res) => {
+    const characters = await readCharacters();
     const character = characters.find((c) => c.id === parseInt(req.params.id));
     if (!character) {
         return res.status(404).json({ message: "Personaje no encontrado" });
@@ -50,8 +54,8 @@ router.get("/:id", (req, res) => {
 });
 
 // Actualizar un personaje por ID
-router.put("/:id", (req, res) => {
-    const characters = readCharacters();
+routerCharacter.put("/:id", async (req, res) => {
+    const characters = await readCharacters();
     const characterIndex = characters.findIndex((c) => c.id === parseInt(req.params.id));
     if (characterIndex === -1) {
         return res.status(404).json({ message: "Personaje no encontrado." });
@@ -62,19 +66,19 @@ router.put("/:id", (req, res) => {
         animeId: req.body.animeId,
     };
     characters[characterIndex] = updateCharacter;
-    writeCharacters(characters);
+    await writeCharacters(characters);
     res.json({ message: "Personaje actualizado exitosamente", character: updateCharacter });
 });
 
 // Eliminar un personaje por ID
-router.delete("/:id", (req, res) => {
-    const characters = readCharacters();
+routerCharacter.delete("/:id", async (req, res) => {
+    const characters = await readCharacters();
     const newCharacters = characters.filter((c) => c.id !== parseInt(req.params.id));
     if (characters.length === newCharacters.length) {
         return res.status(404).json({ message: "Personaje no encontrado" });
     }
-    writeCharacters(newCharacters);
+    await writeCharacters(newCharacters);
     res.json({ message: "Personaje eliminado exitosamente" });
 });
 
-module.exports = router;
+export default routerCharacter;
