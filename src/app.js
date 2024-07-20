@@ -20,5 +20,5 @@ app.use("/studios", studiosRoutes);
 app.use(errorHandler); // Middleware para manejar errores.
 
 app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}/directors`);
+    console.log(`Server running at http://localhost:${PORT}/`);
 });
